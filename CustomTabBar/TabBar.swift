@@ -7,8 +7,61 @@
 
 import UIKit
 
+enum TabBarState { case normal, options }
+
+typealias Icon = UIView
+
+protocol TabBarDataSource: AnyObject {
+    func numberOfIcons(for tabBar: TabBar) -> Int
+    func tabBar(_ tabBar: TabBar, iconForItemAt index: Int, in state: TabBarState) -> Icon
+}
+
 class TabBar: UIView {
-    private let iconsCount: Int = 5
+    // Delegates
+    weak var dataSource: TabBarDataSource? {
+        didSet {
+            iconsCount = dataSource?.numberOfIcons(for: self) ?? iconsCount
+            self.frame = defaultFrame
+            updateIcons(for: state)
+            loadIcons(for: state)
+        }
+    }
+    
+    //
+    private var iconsCount: Int = 5
+    private var icons = [Icon]()
+    private var newIcons = [Icon]()
+    private var state: TabBarState = .normal
+    
+    // Icons Updation
+    private func frameForIcon(at index: CGFloat, in state: TabBarState) -> CGRect {
+        let size: CGSize = .init(width: iconHeight, height: iconHeight)
+        let originX = frame.origin.x + padding + index*iconHeight + index*spacing
+        let originY = frame.origin.y + padding
+        return .init(origin: .init(x: originX, y: originY), size: size)
+    }
+    private func updateIcons(for state: TabBarState) {
+        guard dataSource != nil else { return }
+        var newIcons = [Icon]()
+        for index in 0..<iconsCount {
+            let icon = dataSource!.tabBar(self, iconForItemAt: index, in: state)
+            icon.backgroundColor = colorForIcon
+            icon.layer.cornerRadius = iconHeight/2
+            icon.frame = frameForIcon(at: CGFloat(index), in: state)
+            newIcons.append(icon)
+        }
+        self.newIcons = newIcons
+    }
+    private func loadIcons(for state: TabBarState) {
+        newIcons.forEach { icon in
+            superview?.addSubview(icon)
+        }
+        icons.forEach { icon in
+            icon.removeFromSuperview()
+        }
+        icons = newIcons
+    }
+    
     
     // Default Frame for TabBarState- Normal
     private var defaultFrame: CGRect {
@@ -43,6 +96,7 @@ class TabBar: UIView {
     private let padding: CGFloat = 8
     private let spacing: CGFloat = 16
     private let colorForLayer: CGColor = UIColor.purple.cgColor
+    private let colorForIcon: UIColor = .blue
     
     // Layers
     private var shapeLayer: CAShapeLayer?

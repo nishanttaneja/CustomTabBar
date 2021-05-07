@@ -7,35 +7,25 @@
 
 import UIKit
 
-class ViewController: UIViewController, TabBarDataSource {
-    private let tabBar = TabBar()
-    
-    func numberOfIcons(for tabBar: TabBar) -> Int {
-        5
-    }
-    
-    func tabBar(_ tabBar: TabBar, iconForItemAt index: Int, in state: TabBarState) -> Icon {
-        let icon = Icon()
-        
-        return icon
-    }
-    
-    
+class BlueController: TabBarController {
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .darkGray
-        view.addSubview(tabBar)
-        tabBar.dataSource = self
+        view.backgroundColor = .blue
     }
-    
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        tabBar.hide()
-    }
+}
 
-//    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-//        tabBar.barIsHidden ? tabBar.show() : tabBar.hide()
-//    }
+class GreenController: TabBarController {
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .green
+    }
 
 }
 
+class RedController: TabBarController {
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .red
+    }
+
+}

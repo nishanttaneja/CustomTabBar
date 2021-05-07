@@ -9,9 +9,12 @@ import UIKit
 
 class ViewController: UIViewController {
 
+    private let tabBar = TabBar()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
+        view.backgroundColor = .darkGray
+        view.addSubview(tabBar)
     }
 
 

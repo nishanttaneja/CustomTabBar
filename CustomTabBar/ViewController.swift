@@ -11,7 +11,7 @@ class ViewController: UIViewController, TabBarDataSource {
     private let tabBar = TabBar()
     
     func numberOfIcons(for tabBar: TabBar) -> Int {
-        3
+        5
     }
     
     func tabBar(_ tabBar: TabBar, iconForItemAt index: Int, in state: TabBarState) -> Icon {
@@ -27,7 +27,15 @@ class ViewController: UIViewController, TabBarDataSource {
         view.addSubview(tabBar)
         tabBar.dataSource = self
     }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        tabBar.hide()
+    }
 
+//    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+//        tabBar.barIsHidden ? tabBar.show() : tabBar.hide()
+//    }
 
 }
 

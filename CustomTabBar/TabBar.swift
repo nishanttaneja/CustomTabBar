@@ -27,43 +27,18 @@ class TabBar: UIView {
         }
     }
     
-    //
+    // Constants
     private var iconsCount: Int = 5
+    private let iconHeight: CGFloat = 40
+    private let padding: CGFloat = 8
+    private let spacing: CGFloat = 16
+    private let colorForLayer: CGColor = UIColor.purple.cgColor
+    private let colorForIcon: UIColor = .blue
+    
+    // Properties
     private var icons = [Icon]()
     private var newIcons = [Icon]()
     private var state: TabBarState = .normal
-    
-    // Icons Updation
-    private func frameForIcon(at index: CGFloat, in state: TabBarState) -> CGRect {
-        let size: CGSize = .init(width: iconHeight, height: iconHeight)
-        let originX = frame.origin.x + padding + index*iconHeight + index*spacing
-        let originY = frame.origin.y + padding
-        return .init(origin: .init(x: originX, y: originY), size: size)
-    }
-    private func updateIcons(for state: TabBarState) {
-        guard dataSource != nil else { return }
-        var newIcons = [Icon]()
-        for index in 0..<iconsCount {
-            let icon = dataSource!.tabBar(self, iconForItemAt: index, in: state)
-            icon.backgroundColor = colorForIcon
-            icon.layer.cornerRadius = iconHeight/2
-            icon.frame = frameForIcon(at: CGFloat(index), in: state)
-            newIcons.append(icon)
-        }
-        self.newIcons = newIcons
-    }
-    private func loadIcons(for state: TabBarState) {
-        newIcons.forEach { icon in
-            superview?.addSubview(icon)
-        }
-        icons.forEach { icon in
-            icon.removeFromSuperview()
-        }
-        icons = newIcons
-    }
-    
-    
-    // Default Frame for TabBarState- Normal
     private var defaultFrame: CGRect {
         let iconsCountInFloat = CGFloat(iconsCount)
         let height = iconHeight + 2*padding
@@ -73,8 +48,7 @@ class TabBar: UIView {
         let originY = (screenSize.height - height - 16)
         return .init(x: originX, y: originY, width: width, height: height)
     }
-    
-    // Path for Shape Layer
+    private var shapeLayer: CAShapeLayer?
     private var layerPath: UIBezierPath {
         // Dependencies
         let width = frame.width
@@ -90,16 +64,28 @@ class TabBar: UIView {
         path.addLine(to: .init(x: width, y: 0))
         return path
     }
+    var barIsHidden: Bool = true
     
-    // Constants
-    private let iconHeight: CGFloat = 48
-    private let padding: CGFloat = 8
-    private let spacing: CGFloat = 16
-    private let colorForLayer: CGColor = UIColor.purple.cgColor
-    private let colorForIcon: UIColor = .blue
+    // Constructors
+    required init() {
+        super.init(frame: .zero)
+        self.frame = defaultFrame
+        clipsToBounds = true
+    }
     
-    // Layers
-    private var shapeLayer: CAShapeLayer?
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    // Layouts
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        backgroundColor = .white
+        layer.cornerRadius = iconHeight/2
+        updateLayers()
+    }
+    
+    // Layer
     private func updateLayers() {
         let layer = CAShapeLayer()
         layer.path = layerPath.cgPath
@@ -117,22 +103,59 @@ class TabBar: UIView {
         shapeLayer = layer
     }
     
-    // Layouts
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        backgroundColor = .white
-        layer.cornerRadius = iconHeight/2
-        updateLayers()
+    // Icons Updation
+    private func frameForIcon(at index: CGFloat) -> CGRect {
+        let size: CGSize = .init(width: iconHeight, height: iconHeight)
+        let originX = frame.origin.x + padding + index*iconHeight + index*spacing
+        let originY = frame.origin.y + padding
+        return .init(origin: .init(x: originX, y: originY), size: size)
+    }
+    private func updateIcons(for state: TabBarState) {
+        guard dataSource != nil else { return }
+        var newIcons = [Icon]()
+        for index in 0..<iconsCount {
+            let icon = dataSource!.tabBar(self, iconForItemAt: index, in: state)
+            icon.backgroundColor = colorForIcon
+            icon.layer.cornerRadius = iconHeight/2
+            icon.frame = frameForIcon(at: CGFloat(index))
+            newIcons.append(icon)
+        }
+        self.newIcons = newIcons
+    }
+    private func loadIcons(for state: TabBarState) {
+        newIcons.forEach({ superview?.addSubview($0) })
+        icons.forEach({ $0.removeFromSuperview() })
+        icons = newIcons
     }
     
-    // Constructors
-    required init() {
-        super.init(frame: .zero)
-        self.frame = defaultFrame
-        clipsToBounds = true
+    // Animations
+    func show() {
+        alpha = 0
+        frame.origin.y += frame.height + iconHeight
+        icons.forEach({ $0.alpha = 0; $0.center = center })
+        UIView.animate(withDuration: 1, delay: 0, usingSpringWithDamping: 0.6, initialSpringVelocity: 1, options: .curveEaseIn) {
+            self.alpha = 1
+            self.frame.origin.y = self.defaultFrame.origin.y
+            for (index, icon) in self.icons.enumerated() {
+                icon.frame = self.frameForIcon(at: CGFloat(index))
+                if index == Int(self.iconsCount/2) {
+                    icon.frame.origin.y -= self.iconHeight
+                    icon.transform = .init(scaleX: 1.2, y: 1.2)
+                }
+                icon.alpha = 1
+            }
+        } completion: { _ in
+            self.barIsHidden = false
+        }
     }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+    func hide() {
+        UIView.animate(withDuration: 0.6, delay: 0, usingSpringWithDamping: 0.6, initialSpringVelocity: 1, options: .curveEaseOut) {
+            self.alpha = 0
+            self.frame.origin.y += self.frame.height + self.iconHeight
+            self.icons.forEach({ $0.alpha = 0; $0.center = self.center; $0.transform = .identity })
+        } completion: { _ in
+            self.barIsHidden = true
+        }
+
     }
 }
